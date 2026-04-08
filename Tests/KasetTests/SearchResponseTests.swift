@@ -92,7 +92,7 @@ struct SearchResponseTests {
 
     @Test("Playlist result item subtitle")
     func playlistResultItemSubtitle() {
-        let playlist = Playlist(id: "1", title: "Playlist", description: nil, thumbnailURL: nil, trackCount: nil, author: "Playlist Author")
+        let playlist = Playlist(id: "1", title: "Playlist", description: nil, thumbnailURL: nil, trackCount: nil, author: Artist(id: UUID().uuidString, name: "Playlist Author"))
         let item = SearchResultItem.playlist(playlist)
         #expect(item.subtitle == "Playlist Author")
     }

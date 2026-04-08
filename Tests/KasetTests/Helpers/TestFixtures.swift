@@ -70,7 +70,7 @@ enum TestFixtures {
     static func makePlaylist(
         id: String = "VL-test-playlist",
         title: String = "Test Playlist",
-        author: String? = "Test User"
+        author: Artist? = Artist(id: UUID().uuidString, name: "Test User")
     ) -> Playlist {
         Playlist(
             id: id,
@@ -99,17 +99,52 @@ enum TestFixtures {
     static func makeArtistDetail(
         artist: Artist? = nil,
         songCount: Int = 5,
-        albumCount: Int = 3
+        albumCount: Int = 3,
+        playlistCount: Int = 0,
+        featuredOnPlaylistCount: Int = 0,
+        similarArtistCount: Int = 0,
+        monthlyAudience: String? = nil
     ) -> ArtistDetail {
         let a = artist ?? self.makeArtist()
+        let playlists = (0 ..< playlistCount).map { index in
+            self.makePlaylist(id: "VL-artist-\(index)", title: "Artist Playlist \(index)", author: Artist(id: UUID().uuidString, name: a.name))
+        }
+        let featuredOnSectionPlaylists = (0 ..< featuredOnPlaylistCount).map { index in
+            self.makePlaylist(id: "VL-featured-\(index)", title: "Featured Playlist \(index)", author: Artist(id: UUID().uuidString, name: "Various Artists"))
+        }
+        let albums = (0 ..< albumCount).map { index in
+            self.makeAlbum(id: "MPRE-\(index)", title: "Album \(index)")
+        }
         return ArtistDetail(
             artist: a,
             description: "A test artist description",
             songs: self.makeSongs(count: songCount),
-            albums: (0 ..< albumCount).map { index in
-                self.makeAlbum(id: "MPRE-\(index)", title: "Album \(index)")
-            },
-            thumbnailURL: a.thumbnailURL
+            albumSections: albums.isEmpty ? [] : [
+                AlbumCarouselSection(
+                    title: "Albums",
+                    albums: albums
+                ),
+            ],
+            playlistSections: featuredOnSectionPlaylists.isEmpty && playlists.isEmpty ? [] : [
+                featuredOnSectionPlaylists.isEmpty ? nil : PlaylistCarouselSection(
+                    title: "Featured on",
+                    playlists: featuredOnSectionPlaylists
+                ),
+                playlists.isEmpty ? nil : PlaylistCarouselSection(
+                    title: "Playlists",
+                    playlists: playlists
+                ),
+            ].compactMap(\.self),
+            artistSections: similarArtistCount > 0 ? [
+                ArtistCarouselSection(
+                    title: "Similar artists",
+                    artists: (0 ..< similarArtistCount).map { index in
+                        self.makeArtist(id: "UC-similar-\(index)", name: "Similar Artist \(index)")
+                    }
+                ),
+            ] : [],
+            thumbnailURL: a.thumbnailURL,
+            monthlyAudience: monthlyAudience
         )
     }
 

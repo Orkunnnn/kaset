@@ -12,7 +12,7 @@ enum PlaylistParser {
         var title: String = "Unknown Playlist"
         var description: String?
         var thumbnailURL: URL?
-        var author: String?
+        var author: Artist?
         var trackCount: Int?
         var duration: String?
     }
@@ -227,7 +227,7 @@ enum PlaylistParser {
                 description: nil,
                 thumbnailURL: thumbnailURL,
                 trackCount: nil,
-                author: subtitle
+                author: subtitle.map { Artist(id: UUID().uuidString, name: $0) }
             )
             playlists.append(playlist)
             Self.logger.info("parseLibraryItem: Added playlist: \(title)")
@@ -284,7 +284,7 @@ enum PlaylistParser {
                 description: nil,
                 thumbnailURL: thumbnailURL,
                 trackCount: nil,
-                author: subtitle
+                author: subtitle.map { Artist(id: UUID().uuidString, name: $0) }
             )
             playlists.append(playlist)
             Self.logger.info("parseLibraryItemFromResponsive: Added playlist: \(title)")
@@ -851,7 +851,11 @@ enum PlaylistParser {
         if let subtitleData = renderer["subtitle"] as? [String: Any],
            let runs = subtitleData["runs"] as? [[String: Any]]
         {
-            header.author = runs.compactMap { $0["text"] as? String }.first
+            if let navigableArtist = ParsingHelpers.extractFirstNavigableArtist(from: runs) {
+                header.author = navigableArtist
+            } else if let name = runs.compactMap({ $0["text"] as? String }).first {
+                header.author = Artist(id: UUID().uuidString, name: name)
+            }
             Self.applyMetadata(from: runs, to: &header)
         }
 
@@ -883,11 +887,16 @@ enum PlaylistParser {
             header.description = runs.compactMap { $0["text"] as? String }.joined()
         }
 
-        if header.author == nil,
-           let subtitleData = renderer["subtitle"] as? [String: Any],
+        if let subtitleData = renderer["subtitle"] as? [String: Any],
            let runs = subtitleData["runs"] as? [[String: Any]]
         {
-            header.author = runs.compactMap { $0["text"] as? String }.first
+            if header.author == nil {
+                if let navigableArtist = ParsingHelpers.extractFirstNavigableArtist(from: runs) {
+                    header.author = navigableArtist
+                } else if let name = runs.compactMap({ $0["text"] as? String }).first {
+                    header.author = Artist(id: UUID().uuidString, name: name)
+                }
+            }
             Self.applyMetadata(from: runs, to: &header)
         }
     }
@@ -924,11 +933,16 @@ enum PlaylistParser {
             header.thumbnailURL = thumbnails.last.flatMap { URL(string: $0) }
         }
 
-        if header.author == nil,
-           let subtitleData = detailHeader["subtitle"] as? [String: Any],
+        if let subtitleData = detailHeader["subtitle"] as? [String: Any],
            let runs = subtitleData["runs"] as? [[String: Any]]
         {
-            header.author = runs.compactMap { $0["text"] as? String }.first
+            if header.author == nil {
+                if let navigableArtist = ParsingHelpers.extractFirstNavigableArtist(from: runs) {
+                    header.author = navigableArtist
+                } else if let name = runs.compactMap({ $0["text"] as? String }).first {
+                    header.author = Artist(id: UUID().uuidString, name: name)
+                }
+            }
             Self.applyMetadata(from: runs, to: &header)
         }
 
@@ -1012,14 +1026,18 @@ enum PlaylistParser {
             header.description = runs.compactMap { $0["text"] as? String }.joined()
         }
 
-        if header.author == nil,
-           let facepile = renderer["facepile"] as? [String: Any],
-           let avatarStackViewModel = facepile["avatarStackViewModel"] as? [String: Any],
-           let text = avatarStackViewModel["text"] as? [String: Any],
-           let content = text["content"] as? String,
-           !content.isEmpty
+        if let facepileArtist = ParsingHelpers.extractFacepileArtist(from: renderer) {
+            if header.author == nil {
+                header.author = facepileArtist
+            }
+        } else if header.author == nil,
+                  let facepile = renderer["facepile"] as? [String: Any],
+                  let avatarStackViewModel = facepile["avatarStackViewModel"] as? [String: Any],
+                  let text = avatarStackViewModel["text"] as? [String: Any],
+                  let content = text["content"] as? String,
+                  !content.isEmpty
         {
-            header.author = content
+            header.author = Artist(id: UUID().uuidString, name: content)
         }
 
         if let subtitleData = renderer["subtitle"] as? [String: Any],
@@ -1166,6 +1184,7 @@ enum PlaylistParser {
         let thumbnailURL = thumbnails.last.flatMap { URL(string: $0) } ?? fallbackThumbnailURL
         let duration = ParsingHelpers.extractDurationFromFlexColumns(responsiveRenderer)
         let album = ParsingHelpers.extractAlbumFromFlexColumns(responsiveRenderer)
+        let isPlayable = ParsingHelpers.isPlayableMusicItem(from: responsiveRenderer)
 
         return Song(
             id: videoId,
@@ -1174,7 +1193,8 @@ enum PlaylistParser {
             album: album,
             duration: duration,
             thumbnailURL: thumbnailURL,
-            videoId: videoId
+            videoId: videoId,
+            isPlayable: isPlayable
         )
     }
 
@@ -1227,7 +1247,7 @@ enum PlaylistParser {
             description: nil,
             thumbnailURL: thumbnailURL,
             trackCount: nil,
-            author: ParsingHelpers.extractSubtitle(from: data)
+            author: ParsingHelpers.extractSubtitle(from: data).map { Artist(id: UUID().uuidString, name: $0) }
         )
     }
 
@@ -1250,7 +1270,7 @@ enum PlaylistParser {
             description: nil,
             thumbnailURL: thumbnailURL,
             trackCount: nil,
-            author: ParsingHelpers.extractSubtitleFromFlexColumns(data)
+            author: ParsingHelpers.extractSubtitleFromFlexColumns(data).map { Artist(id: UUID().uuidString, name: $0) }
         )
     }
 

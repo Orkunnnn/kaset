@@ -9,7 +9,23 @@ struct Playlist: Identifiable, Codable, Hashable {
     let description: String?
     let thumbnailURL: URL?
     let trackCount: Int?
-    let author: String?
+    let author: Artist?
+
+    init(
+        id: String,
+        title: String,
+        description: String?,
+        thumbnailURL: URL?,
+        trackCount: Int?,
+        author: Artist? = nil
+    ) {
+        self.id = id
+        self.title = title
+        self.description = description
+        self.thumbnailURL = thumbnailURL
+        self.trackCount = trackCount
+        self.author = author
+    }
 
     /// Whether this is an album (vs a playlist).
     /// Albums have IDs starting with "OLAK" or "MPRE".
@@ -60,9 +76,17 @@ extension Playlist {
         if let authors = data["authors"] as? [[String: Any]],
            let firstAuthor = authors.first
         {
-            self.author = firstAuthor["name"] as? String
+            if let artist = Artist(from: firstAuthor) {
+                self.author = artist
+            } else if let name = firstAuthor["name"] as? String {
+                self.author = Artist(id: UUID().uuidString, name: name)
+            } else {
+                self.author = nil
+            }
+        } else if let authorName = data["author"] as? String {
+            self.author = Artist(id: UUID().uuidString, name: authorName)
         } else {
-            self.author = data["author"] as? String
+            self.author = nil
         }
     }
 }
@@ -75,7 +99,7 @@ struct PlaylistDetail: Identifiable {
     let title: String
     let description: String?
     let thumbnailURL: URL?
-    let author: String?
+    let author: Artist?
     let trackCount: Int?
     let tracks: [Song]
     let duration: String?

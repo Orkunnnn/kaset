@@ -1,3 +1,4 @@
+import Foundation
 import Testing
 @testable import Kaset
 
@@ -56,7 +57,7 @@ struct ShareableTests {
             description: nil,
             thumbnailURL: nil,
             trackCount: 10,
-            author: "John"
+            author: Artist(id: UUID().uuidString, name: "John")
         )
 
         #expect(playlist.shareText == "My Favorites by John")
@@ -70,7 +71,7 @@ struct ShareableTests {
             description: nil,
             thumbnailURL: nil,
             trackCount: 5,
-            author: "Test Author"
+            author: Artist(id: UUID().uuidString, name: "Test Author")
         )
 
         #expect(playlist.shareURL?.absoluteString == "https://music.youtube.com/playlist?list=PLtest123")

@@ -233,7 +233,7 @@ struct ModelTests {
         ]
 
         let playlist = try #require(Playlist(from: data))
-        #expect(playlist.author == "Playlist Creator")
+        #expect(playlist.author?.name == "Playlist Creator")
     }
 
     @Test("Parses author from string field")
@@ -245,7 +245,7 @@ struct ModelTests {
         ]
 
         let playlist = try #require(Playlist(from: data))
-        #expect(playlist.author == "Direct Author")
+        #expect(playlist.author?.name == "Direct Author")
     }
 
     @Test("Parses track count from formatted string")
@@ -280,7 +280,7 @@ struct ModelTests {
             description: "A description",
             thumbnailURL: URL(string: "https://example.com/thumb.jpg"),
             trackCount: 5,
-            author: "Test Author"
+            author: Artist(id: UUID().uuidString, name: "Test Author")
         )
 
         let songs = [
@@ -293,7 +293,7 @@ struct ModelTests {
         #expect(detail.id == "PL123")
         #expect(detail.title == "Test Playlist")
         #expect(detail.description == "A description")
-        #expect(detail.author == "Test Author")
+        #expect(detail.author?.name == "Test Author")
         #expect(detail.trackCount == 5)
         #expect(detail.tracks.count == 2)
         #expect(detail.duration == "6:20")

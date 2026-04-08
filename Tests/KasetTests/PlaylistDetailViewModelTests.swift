@@ -107,7 +107,7 @@ struct PlaylistDetailViewModelTests {
             description: "A test playlist",
             thumbnailURL: URL(string: "https://example.com/playlist.jpg"),
             trackCount: 2429,
-            author: "Test User"
+            author: Artist(id: "UC123456", name: "Test User")
         )
         let playlistDetail = PlaylistDetail(
             playlist: playlist,
@@ -126,6 +126,7 @@ struct PlaylistDetailViewModelTests {
 
         #expect(self.viewModel.playlistDetail?.tracks.count == 150)
         #expect(self.viewModel.playlistDetail?.trackCount == 2429)
+        #expect(self.viewModel.playlistDetail?.author?.id == "UC123456")
     }
 
     @Test("Load more deduplicates tracks")

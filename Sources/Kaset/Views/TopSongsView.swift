@@ -55,7 +55,7 @@ struct TopSongsView: View {
     private var songsListView: some View {
         ScrollView {
             LazyVStack(spacing: 0) {
-                ForEach(Array(self.viewModel.songs.enumerated()), id: \.element.id) { index, song in
+                ForEach(Array(self.viewModel.songs.enumerated()), id: \.offset) { index, song in
                     self.songRow(song, index: index)
 
                     if index < self.viewModel.songs.count - 1 {
@@ -168,7 +168,7 @@ struct TopSongsView: View {
                     description: nil,
                     thumbnailURL: album.thumbnailURL ?? song.thumbnailURL,
                     trackCount: album.trackCount,
-                    author: album.artistsDisplay
+                    author: Artist(id: UUID().uuidString, name: album.artistsDisplay)
                 )
                 NavigationLink(value: playlist) {
                     Label("Go to Album", systemImage: "square.stack")

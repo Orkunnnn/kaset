@@ -280,7 +280,7 @@ final class MockUITestYTMusicClient: YTMusicClientProtocol {
             description: "A test playlist",
             thumbnailURL: nil,
             trackCount: 10,
-            author: "Test User"
+            author: Artist(id: UUID().uuidString, name: "Test User")
         )
         let detail = PlaylistDetail(
             playlist: playlist,
@@ -306,7 +306,9 @@ final class MockUITestYTMusicClient: YTMusicClientProtocol {
             artist: artist,
             description: "A mock artist for UI testing",
             songs: Self.defaultSongs(count: 5),
-            albums: Self.defaultAlbums(count: 3),
+            albumSections: [
+                AlbumCarouselSection(title: "Albums", albums: Self.defaultAlbums(count: 3)),
+            ],
             thumbnailURL: nil
         )
     }
@@ -545,7 +547,7 @@ final class MockUITestYTMusicClient: YTMusicClientProtocol {
                 description: nil,
                 thumbnailURL: nil,
                 trackCount: dict["trackCount"] as? Int,
-                author: dict["author"] as? String
+                author: (dict["author"] as? String).map { Artist(id: UUID().uuidString, name: $0) }
             )
         }
     }
@@ -624,7 +626,7 @@ final class MockUITestYTMusicClient: YTMusicClientProtocol {
                 description: "A great playlist",
                 thumbnailURL: nil,
                 trackCount: 10 + index * 5,
-                author: "Test User"
+                author: Artist(id: UUID().uuidString, name: "Test User")
             )
         }
     }

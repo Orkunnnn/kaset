@@ -210,7 +210,7 @@ enum SearchResponseParser {
                 description: nil,
                 thumbnailURL: thumbnailURL,
                 trackCount: nil,
-                author: subtitle
+                author: subtitle.map { Artist(id: UUID().uuidString, name: $0) }
             )
             return .playlist(playlist)
         }
