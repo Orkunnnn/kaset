@@ -149,17 +149,19 @@ struct ArtistDetailView: View {
                 Spacer()
 
                 HStack(spacing: 12) {
-                    // Shuffle button - shuffles all artist's songs (fetches if needed)
-                    Button {
-                        Task {
-                            await self.shuffleAllSongs()
+                    if detail.profileKind == .artist {
+                        // Shuffle button - shuffles all artist's songs (fetches if needed)
+                        Button {
+                            Task {
+                                await self.shuffleAllSongs()
+                            }
+                        } label: {
+                            Label("Shuffle", systemImage: "shuffle")
                         }
-                    } label: {
-                        Label("Shuffle", systemImage: "shuffle")
+                        .buttonStyle(.bordered)
+                        .controlSize(.large)
+                        .disabled(detail.songs.isEmpty && !detail.hasMoreSongs)
                     }
-                    .buttonStyle(.bordered)
-                    .controlSize(.large)
-                    .disabled(detail.songs.isEmpty && !detail.hasMoreSongs)
 
                     // Mix button - plays personalized radio with mix of artists
                     // Only shown if mix data is available from the API
