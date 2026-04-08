@@ -71,6 +71,10 @@ struct ArtistDetail {
         self.artist.name
     }
 
+    var profileKind: ArtistProfileKind {
+        self.artist.profileKind
+    }
+
     func audienceSubtitle(languageCode: String) -> String? {
         if let monthlyAudience = self.monthlyAudience,
            let formattedMonthlyAudience = AudienceTextFormatter.formatMonthlyAudience(monthlyAudience, languageCode: languageCode)

@@ -280,7 +280,7 @@ struct ModelTests {
             description: "A description",
             thumbnailURL: URL(string: "https://example.com/thumb.jpg"),
             trackCount: 5,
-            author: Artist(id: UUID().uuidString, name: "Test Author")
+            author: Artist.inline(name: "Test Author", namespace: "playlist-author")
         )
 
         let songs = [

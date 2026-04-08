@@ -49,33 +49,7 @@ final class ArtistDetailViewModel {
 
         do {
             var detail = try await client.getArtist(id: self.artist.id)
-
-            // Use original artist info as fallback if API returned unknown/empty values
-            if detail.name == "Unknown Artist", self.artist.name != "Unknown Artist" {
-                let mergedArtist = Artist(
-                    id: artist.id,
-                    name: self.artist.name,
-                    thumbnailURL: detail.thumbnailURL ?? self.artist.thumbnailURL
-                )
-                detail = ArtistDetail(
-                    artist: mergedArtist,
-                    description: detail.description,
-                    songs: detail.songs,
-                    albumSections: detail.albumSections,
-                    playlistSections: detail.playlistSections,
-                    artistSections: detail.artistSections,
-                    thumbnailURL: detail.thumbnailURL ?? self.artist.thumbnailURL,
-                    channelId: detail.channelId,
-                    isSubscribed: detail.isSubscribed,
-                    subscriberCount: detail.subscriberCount,
-                    monthlyAudience: detail.monthlyAudience,
-                    hasMoreSongs: detail.hasMoreSongs,
-                    songsBrowseId: detail.songsBrowseId,
-                    songsParams: detail.songsParams,
-                    mixPlaylistId: detail.mixPlaylistId,
-                    mixVideoId: detail.mixVideoId
-                )
-            }
+            detail = self.mergedArtistDetail(detail)
 
             self.artistDetail = detail
             self.loadingState = .loaded
@@ -188,5 +162,47 @@ final class ArtistDetailViewModel {
 
         // Fallback to existing songs
         return self.artistDetail?.songs ?? []
+    }
+
+    private func mergedArtistDetail(_ detail: ArtistDetail) -> ArtistDetail {
+        let resolvedName = detail.name == "Unknown Artist" && self.artist.name != "Unknown Artist"
+            ? self.artist.name
+            : detail.artist.name
+        let resolvedThumbnailURL = detail.thumbnailURL ?? self.artist.thumbnailURL
+        let resolvedProfileKind = detail.profileKind == .unknown ? self.artist.profileKind : detail.profileKind
+
+        guard resolvedName != detail.artist.name
+            || resolvedThumbnailURL != detail.thumbnailURL
+            || resolvedProfileKind != detail.profileKind
+        else {
+            return detail
+        }
+
+        let mergedArtist = Artist(
+            id: detail.artist.id,
+            name: resolvedName,
+            thumbnailURL: resolvedThumbnailURL,
+            subtitle: detail.artist.subtitle ?? self.artist.subtitle,
+            profileKind: resolvedProfileKind
+        )
+
+        return ArtistDetail(
+            artist: mergedArtist,
+            description: detail.description,
+            songs: detail.songs,
+            albumSections: detail.albumSections,
+            playlistSections: detail.playlistSections,
+            artistSections: detail.artistSections,
+            thumbnailURL: resolvedThumbnailURL,
+            channelId: detail.channelId,
+            isSubscribed: detail.isSubscribed,
+            subscriberCount: detail.subscriberCount,
+            monthlyAudience: detail.monthlyAudience,
+            hasMoreSongs: detail.hasMoreSongs,
+            songsBrowseId: detail.songsBrowseId,
+            songsParams: detail.songsParams,
+            mixPlaylistId: detail.mixPlaylistId,
+            mixVideoId: detail.mixVideoId
+        )
     }
 }

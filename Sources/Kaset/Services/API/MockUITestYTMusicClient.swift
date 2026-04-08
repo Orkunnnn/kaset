@@ -280,7 +280,7 @@ final class MockUITestYTMusicClient: YTMusicClientProtocol {
             description: "A test playlist",
             thumbnailURL: nil,
             trackCount: 10,
-            author: Artist(id: UUID().uuidString, name: "Test User")
+            author: Artist.inline(name: "Test User", namespace: "playlist-author")
         )
         let detail = PlaylistDetail(
             playlist: playlist,
@@ -547,7 +547,7 @@ final class MockUITestYTMusicClient: YTMusicClientProtocol {
                 description: nil,
                 thumbnailURL: nil,
                 trackCount: dict["trackCount"] as? Int,
-                author: (dict["author"] as? String).map { Artist(id: UUID().uuidString, name: $0) }
+                author: (dict["author"] as? String).map { Artist.inline(name: $0, namespace: "playlist-author") }
             )
         }
     }
@@ -626,7 +626,7 @@ final class MockUITestYTMusicClient: YTMusicClientProtocol {
                 description: "A great playlist",
                 thumbnailURL: nil,
                 trackCount: 10 + index * 5,
-                author: Artist(id: UUID().uuidString, name: "Test User")
+                author: Artist.inline(name: "Test User", namespace: "playlist-author")
             )
         }
     }

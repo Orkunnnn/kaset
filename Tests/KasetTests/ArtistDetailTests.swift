@@ -48,6 +48,14 @@ struct ArtistDetailTests {
         #expect(detail.name == "Famous Artist Name")
     }
 
+    @Test("ArtistDetail profile kind computed property")
+    func artistDetailProfileKindComputedProperty() {
+        let artist = Artist(id: "UC123", name: "Profile", profileKind: .profile)
+        let detail = ArtistDetail(artist: artist, description: nil, songs: [], thumbnailURL: nil)
+
+        #expect(detail.profileKind == .profile)
+    }
+
     @Test("ArtistDetail with no description")
     func artistDetailWithNoDescription() {
         let artist = Artist(id: "1", name: "Artist")

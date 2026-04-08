@@ -130,7 +130,11 @@ enum ParsingHelpers {
                        let browseEndpoint = endpoint["browseEndpoint"] as? [String: Any],
                        let artistId = browseEndpoint["browseId"] as? String
                     {
-                        artists.append(Artist(id: artistId, name: text))
+                        artists.append(Artist(
+                            id: artistId,
+                            name: text,
+                            profileKind: Artist.profileKind(forPageType: Self.extractPageType(from: browseEndpoint))
+                        ))
                     } else if !text.isEmpty {
                         // Generate stable ID from artist name when no browse ID available
                         let stableArtistId = Self.stableId(title: "artist", components: text)
@@ -249,7 +253,13 @@ enum ParsingHelpers {
             return nil
         }
 
-        return Artist(id: browseId, name: name, thumbnailURL: thumbnailURL)
+        let pageType = self.extractPageType(from: browseEndpoint)
+        return Artist(
+            id: browseId,
+            name: name,
+            thumbnailURL: thumbnailURL,
+            profileKind: Artist.profileKind(forPageType: pageType)
+        )
     }
 
     /// Extracts the first linked artist-like run from a runs array.
@@ -489,7 +499,11 @@ enum ParsingHelpers {
                        let browseId = browseEndpoint["browseId"] as? String,
                        Artist.isNavigableId(browseId)
                     {
-                        artists.append(Artist(id: browseId, name: artistName))
+                        artists.append(Artist(
+                            id: browseId,
+                            name: artistName,
+                            profileKind: Artist.profileKind(forPageType: Self.extractPageType(from: browseEndpoint))
+                        ))
                     }
                 }
             }

@@ -79,12 +79,12 @@ extension Playlist {
             if let artist = Artist(from: firstAuthor) {
                 self.author = artist
             } else if let name = firstAuthor["name"] as? String {
-                self.author = Artist(id: UUID().uuidString, name: name)
+                self.author = Artist.inline(name: name, namespace: "playlist-author")
             } else {
                 self.author = nil
             }
         } else if let authorName = data["author"] as? String {
-            self.author = Artist(id: UUID().uuidString, name: authorName)
+            self.author = Artist.inline(name: authorName, namespace: "playlist-author")
         } else {
             self.author = nil
         }

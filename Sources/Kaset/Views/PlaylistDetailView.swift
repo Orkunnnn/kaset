@@ -413,7 +413,7 @@ struct PlaylistDetailView: View {
                         description: nil,
                         thumbnailURL: album.thumbnailURL ?? track.thumbnailURL,
                         trackCount: album.trackCount,
-                        author: Artist(id: UUID().uuidString, name: album.artistsDisplay)
+                        author: Artist.inline(name: album.artistsDisplay, namespace: "album-artist")
                     )
                     NavigationLink(value: playlist) {
                         Label("Go to Album", systemImage: "square.stack")
@@ -885,7 +885,7 @@ private struct HoverUnderlineNavigationLink<Value: Hashable>: View {
         description: nil,
         thumbnailURL: nil,
         trackCount: 10,
-        author: Artist(id: UUID().uuidString, name: "Test Author")
+        author: Artist.inline(name: "Test Author", namespace: "playlist-author")
     )
     let authService = AuthService()
     let client = YTMusicClient(authService: authService, webKitManager: .shared)

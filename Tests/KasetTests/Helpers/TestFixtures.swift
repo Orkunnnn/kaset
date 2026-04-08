@@ -56,12 +56,14 @@ enum TestFixtures {
 
     static func makeArtist(
         id: String = "UC123",
-        name: String = "Test Artist"
+        name: String = "Test Artist",
+        profileKind: ArtistProfileKind = .unknown
     ) -> Artist {
         Artist(
             id: id,
             name: name,
-            thumbnailURL: URL(string: "https://example.com/artist.jpg")
+            thumbnailURL: URL(string: "https://example.com/artist.jpg"),
+            profileKind: profileKind
         )
     }
 
@@ -70,7 +72,7 @@ enum TestFixtures {
     static func makePlaylist(
         id: String = "VL-test-playlist",
         title: String = "Test Playlist",
-        author: Artist? = Artist(id: UUID().uuidString, name: "Test User")
+        author: Artist? = Artist.inline(name: "Test User", namespace: "playlist-author")
     ) -> Playlist {
         Playlist(
             id: id,
@@ -107,10 +109,10 @@ enum TestFixtures {
     ) -> ArtistDetail {
         let a = artist ?? self.makeArtist()
         let playlists = (0 ..< playlistCount).map { index in
-            self.makePlaylist(id: "VL-artist-\(index)", title: "Artist Playlist \(index)", author: Artist(id: UUID().uuidString, name: a.name))
+            self.makePlaylist(id: "VL-artist-\(index)", title: "Artist Playlist \(index)", author: Artist.inline(name: a.name, namespace: "playlist-author"))
         }
         let featuredOnSectionPlaylists = (0 ..< featuredOnPlaylistCount).map { index in
-            self.makePlaylist(id: "VL-featured-\(index)", title: "Featured Playlist \(index)", author: Artist(id: UUID().uuidString, name: "Various Artists"))
+            self.makePlaylist(id: "VL-featured-\(index)", title: "Featured Playlist \(index)", author: Artist.inline(name: "Various Artists", namespace: "playlist-author"))
         }
         let albums = (0 ..< albumCount).map { index in
             self.makeAlbum(id: "MPRE-\(index)", title: "Album \(index)")

@@ -75,7 +75,12 @@ enum ArtistParser {
             }
         }
 
-        let artist = Artist(id: artistId, name: headerResult.name, thumbnailURL: headerResult.thumbnailURL)
+        let artist = Artist(
+            id: artistId,
+            name: headerResult.name,
+            thumbnailURL: headerResult.thumbnailURL,
+            profileKind: headerResult.profileKind
+        )
 
         return ArtistDetail(
             artist: artist,
@@ -104,6 +109,7 @@ enum ArtistParser {
         var name: String = "Unknown Artist"
         var description: String?
         var thumbnailURL: URL?
+        var profileKind: ArtistProfileKind = .unknown
         var channelId: String?
         var isSubscribed: Bool = false
         var subscriberCount: String?
@@ -115,6 +121,7 @@ enum ArtistParser {
     private static func parseArtistHeader(_ data: [String: Any], artistId: String) -> HeaderParseResult {
         var result = HeaderParseResult()
         result.channelId = artistId.hasPrefix("UC") ? artistId : nil
+        result.profileKind = Artist.profileKind(forPageType: self.extractPageType(from: data))
 
         // Try musicImmersiveHeaderRenderer (common for artist pages)
         if let header = data["header"] as? [String: Any],
@@ -492,7 +499,7 @@ enum ArtistParser {
                     description: nil,
                     thumbnailURL: thumbnailURL,
                     trackCount: nil,
-                    author: author.map { Artist(id: UUID().uuidString, name: $0) }
+                    author: author.map { Artist.inline(name: $0, namespace: "playlist-author") }
                 ))
             }
 
@@ -501,7 +508,8 @@ enum ArtistParser {
                     id: browseId,
                     name: title,
                     thumbnailURL: thumbnailURL,
-                    subtitle: subtitleText
+                    subtitle: subtitleText,
+                    profileKind: Artist.profileKind(forPageType: pageType)
                 ))
             }
         }
@@ -533,8 +541,34 @@ enum ArtistParser {
                 id: browseId,
                 name: title,
                 thumbnailURL: thumbnailURL,
-                subtitle: subtitleText
+                subtitle: subtitleText,
+                profileKind: Artist.profileKind(forPageType: pageType)
             ))
+        }
+
+        return nil
+    }
+
+    private static func extractPageType(from data: [String: Any]) -> String? {
+        if let pageType = data["pageType"] as? String {
+            return pageType
+        }
+
+        if let browseConfig = data["browseEndpointContextSupportedConfigs"] as? [String: Any],
+           let musicConfig = browseConfig["browseEndpointContextMusicConfig"] as? [String: Any],
+           let pageType = musicConfig["pageType"] as? String
+        {
+            return pageType
+        }
+
+        if let header = data["header"] as? [String: Any] {
+            for rendererKey in ["musicImmersiveHeaderRenderer", "musicVisualHeaderRenderer"] {
+                if let renderer = header[rendererKey] as? [String: Any],
+                   let pageType = renderer["pageType"] as? String
+                {
+                    return pageType
+                }
+            }
         }
 
         return nil

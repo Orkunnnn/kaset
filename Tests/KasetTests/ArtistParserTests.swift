@@ -292,6 +292,20 @@ struct ArtistParserTests {
         #expect(result.artistSections[0].artists.first?.subtitle == "24.9M monthly audience")
     }
 
+    @Test("parseArtistDetail marks user channel carousel items as profiles")
+    func parseArtistDetailMarksUserChannelCarouselItemsAsProfiles() {
+        let data = Self.makeArtistResponseWithSimilarArtists(
+            ids: ["UC-profile-1"],
+            names: ["Profile Artist"],
+            sectionTitle: "Artists on repeat",
+            pageType: "MUSIC_PAGE_TYPE_USER_CHANNEL"
+        )
+
+        let result = ArtistParser.parseArtistDetail(data, artistId: "UC-test")
+
+        #expect(result.artistSections.first?.artists.first?.profileKind == .profile)
+    }
+
     // MARK: - Mix Playlist Tests
 
     @Test("parseArtistDetail extracts mix playlist ID from startRadioButton")
@@ -624,7 +638,8 @@ struct ArtistParserTests {
         ids: [String],
         names: [String],
         subtitles: [String]? = nil,
-        sectionTitle: String
+        sectionTitle: String,
+        pageType: String = "MUSIC_PAGE_TYPE_ARTIST"
     ) -> [String: Any] {
         let artistSubtitles = subtitles ?? Array(repeating: "156M monthly audience", count: ids.count)
         let artistItems = zip(zip(ids, names), artistSubtitles).map { pair, subtitle in
@@ -639,7 +654,7 @@ struct ArtistParserTests {
                                     "browseId": id,
                                     "browseEndpointContextSupportedConfigs": [
                                         "browseEndpointContextMusicConfig": [
-                                            "pageType": "MUSIC_PAGE_TYPE_ARTIST",
+                                            "pageType": pageType,
                                         ],
                                     ],
                                 ],
@@ -654,7 +669,7 @@ struct ArtistParserTests {
                             "browseId": id,
                             "browseEndpointContextSupportedConfigs": [
                                 "browseEndpointContextMusicConfig": [
-                                    "pageType": "MUSIC_PAGE_TYPE_ARTIST",
+                                    "pageType": pageType,
                                 ],
                             ],
                         ],

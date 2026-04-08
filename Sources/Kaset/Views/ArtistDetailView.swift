@@ -121,10 +121,12 @@ struct ArtistDetailView: View {
 
             // Info
             VStack(alignment: .leading, spacing: 8) {
-                Text(String(localized: "Artist"))
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .textCase(.uppercase)
+                if let headerTypeLabel = self.headerTypeLabel(for: detail) {
+                    Text(headerTypeLabel)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .textCase(.uppercase)
+                }
 
                 Text(detail.name)
                     .font(.title)
@@ -208,6 +210,17 @@ struct ArtistDetailView: View {
 
     private func audienceSubtitle(for detail: ArtistDetail) -> String? {
         detail.audienceSubtitle(languageCode: self.currentLanguageCode)
+    }
+
+    private func headerTypeLabel(for detail: ArtistDetail) -> String? {
+        switch detail.profileKind {
+        case .artist:
+            String(localized: "Artist")
+        case .profile:
+            String(localized: "Profile")
+        case .unknown:
+            nil
+        }
     }
 
     @ViewBuilder
@@ -391,7 +404,7 @@ struct ArtistDetailView: View {
                     description: nil,
                     thumbnailURL: album.thumbnailURL ?? song.thumbnailURL,
                     trackCount: album.trackCount,
-                    author: Artist(id: UUID().uuidString, name: album.artistsDisplay)
+                    author: Artist.inline(name: album.artistsDisplay, namespace: "album-artist")
                 )
                 NavigationLink(value: playlist) {
                     Label("Go to Album", systemImage: "square.stack")
@@ -527,7 +540,7 @@ struct ArtistDetailView: View {
             description: nil,
             thumbnailURL: album.thumbnailURL,
             trackCount: album.trackCount,
-            author: Artist(id: UUID().uuidString, name: album.artistsDisplay)
+            author: Artist.inline(name: album.artistsDisplay, namespace: "album-artist")
         )
     }
 

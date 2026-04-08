@@ -85,7 +85,8 @@ enum PlaylistParser {
                 return Artist(
                     id: publicChannelId,
                     name: artist.name,
-                    thumbnailURL: artist.thumbnailURL
+                    thumbnailURL: artist.thumbnailURL,
+                    profileKind: artist.profileKind
                 )
             }
 
@@ -227,15 +228,17 @@ enum PlaylistParser {
                 description: nil,
                 thumbnailURL: thumbnailURL,
                 trackCount: nil,
-                author: subtitle.map { Artist(id: UUID().uuidString, name: $0) }
+                author: subtitle.map { Artist.inline(name: $0, namespace: "playlist-author") }
             )
             playlists.append(playlist)
             Self.logger.info("parseLibraryItem: Added playlist: \(title)")
         } else if Artist.isNavigableId(browseId) {
+            let pageType = ParsingHelpers.extractPageType(from: browseEndpoint)
             let artist = Artist(
                 id: browseId,
                 name: title,
-                thumbnailURL: thumbnailURL
+                thumbnailURL: thumbnailURL,
+                profileKind: Artist.profileKind(forPageType: pageType)
             )
             artists.append(artist)
             Self.logger.info("parseLibraryItem: Added artist: \(title)")
@@ -284,15 +287,17 @@ enum PlaylistParser {
                 description: nil,
                 thumbnailURL: thumbnailURL,
                 trackCount: nil,
-                author: subtitle.map { Artist(id: UUID().uuidString, name: $0) }
+                author: subtitle.map { Artist.inline(name: $0, namespace: "playlist-author") }
             )
             playlists.append(playlist)
             Self.logger.info("parseLibraryItemFromResponsive: Added playlist: \(title)")
         } else if Artist.isNavigableId(browseId) {
+            let pageType = ParsingHelpers.extractPageType(from: browseEndpoint)
             let artist = Artist(
                 id: browseId,
                 name: title,
-                thumbnailURL: thumbnailURL
+                thumbnailURL: thumbnailURL,
+                profileKind: Artist.profileKind(forPageType: pageType)
             )
             artists.append(artist)
             Self.logger.info("parseLibraryItemFromResponsive: Added artist: \(title)")
@@ -854,7 +859,7 @@ enum PlaylistParser {
             if let navigableArtist = ParsingHelpers.extractFirstNavigableArtist(from: runs) {
                 header.author = navigableArtist
             } else if let name = runs.compactMap({ $0["text"] as? String }).first {
-                header.author = Artist(id: UUID().uuidString, name: name)
+                header.author = Artist.inline(name: name, namespace: "playlist-author")
             }
             Self.applyMetadata(from: runs, to: &header)
         }
@@ -894,7 +899,7 @@ enum PlaylistParser {
                 if let navigableArtist = ParsingHelpers.extractFirstNavigableArtist(from: runs) {
                     header.author = navigableArtist
                 } else if let name = runs.compactMap({ $0["text"] as? String }).first {
-                    header.author = Artist(id: UUID().uuidString, name: name)
+                    header.author = Artist.inline(name: name, namespace: "playlist-author")
                 }
             }
             Self.applyMetadata(from: runs, to: &header)
@@ -940,7 +945,7 @@ enum PlaylistParser {
                 if let navigableArtist = ParsingHelpers.extractFirstNavigableArtist(from: runs) {
                     header.author = navigableArtist
                 } else if let name = runs.compactMap({ $0["text"] as? String }).first {
-                    header.author = Artist(id: UUID().uuidString, name: name)
+                    header.author = Artist.inline(name: name, namespace: "playlist-author")
                 }
             }
             Self.applyMetadata(from: runs, to: &header)
@@ -1037,7 +1042,7 @@ enum PlaylistParser {
                   let content = text["content"] as? String,
                   !content.isEmpty
         {
-            header.author = Artist(id: UUID().uuidString, name: content)
+            header.author = Artist.inline(name: content, namespace: "playlist-author")
         }
 
         if let subtitleData = renderer["subtitle"] as? [String: Any],
@@ -1247,7 +1252,7 @@ enum PlaylistParser {
             description: nil,
             thumbnailURL: thumbnailURL,
             trackCount: nil,
-            author: ParsingHelpers.extractSubtitle(from: data).map { Artist(id: UUID().uuidString, name: $0) }
+            author: ParsingHelpers.extractSubtitle(from: data).map { Artist.inline(name: $0, namespace: "playlist-author") }
         )
     }
 
@@ -1270,7 +1275,7 @@ enum PlaylistParser {
             description: nil,
             thumbnailURL: thumbnailURL,
             trackCount: nil,
-            author: ParsingHelpers.extractSubtitleFromFlexColumns(data).map { Artist(id: UUID().uuidString, name: $0) }
+            author: ParsingHelpers.extractSubtitleFromFlexColumns(data).map { Artist.inline(name: $0, namespace: "playlist-author") }
         )
     }
 

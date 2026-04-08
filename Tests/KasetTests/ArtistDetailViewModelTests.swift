@@ -101,11 +101,23 @@ struct ArtistDetailViewModelTests {
 
     @Test("Load uses original artist info for unknown name")
     func loadUsesOriginalArtistInfoForUnknownName() async {
+        let originalArtist = TestFixtures.makeArtist(
+            id: "UC-test-artist",
+            name: "Test Artist",
+            profileKind: .profile
+        )
+        let viewModel = ArtistDetailViewModel(
+            artist: originalArtist,
+            client: self.mockClient,
+            libraryViewModel: self.libraryViewModel
+        )
+
         // Create an artist detail with "Unknown Artist" name
         let unknownArtist = Artist(
             id: "UC-test-artist",
             name: "Unknown Artist",
-            thumbnailURL: nil
+            thumbnailURL: nil,
+            profileKind: .unknown
         )
         let artistDetail = ArtistDetail(
             artist: unknownArtist,
@@ -138,15 +150,16 @@ struct ArtistDetailViewModelTests {
         )
         self.mockClient.artistDetails["UC-test-artist"] = artistDetail
 
-        await self.viewModel.load()
+        await viewModel.load()
 
         // Should use original artist name "Test Artist" instead of "Unknown Artist"
-        #expect(self.viewModel.artistDetail?.name == "Test Artist")
-        #expect(self.viewModel.artistDetail?.albumSections.map(\.title) == ["Singles & EPs"])
-        #expect(self.viewModel.artistDetail?.playlistSections.map(\.title) == ["Featured on", "Playlists on repeat"])
-        #expect(self.viewModel.artistDetail?.artistSections.map(\.title) == ["Artists on repeat"])
-        #expect(self.viewModel.artistDetail?.artistSections.first?.artists.map(\.id) == ["UC-similar"])
-        #expect(self.viewModel.artistDetail?.monthlyAudience == "2.59M")
+        #expect(viewModel.artistDetail?.name == "Test Artist")
+        #expect(viewModel.artistDetail?.profileKind == .profile)
+        #expect(viewModel.artistDetail?.albumSections.map(\.title) == ["Singles & EPs"])
+        #expect(viewModel.artistDetail?.playlistSections.map(\.title) == ["Featured on", "Playlists on repeat"])
+        #expect(viewModel.artistDetail?.artistSections.map(\.title) == ["Artists on repeat"])
+        #expect(viewModel.artistDetail?.artistSections.first?.artists.map(\.id) == ["UC-similar"])
+        #expect(viewModel.artistDetail?.monthlyAudience == "2.59M")
     }
 
     // MARK: - Refresh Tests

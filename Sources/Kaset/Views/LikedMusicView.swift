@@ -285,7 +285,7 @@ struct LikedMusicView: View {
                     description: nil,
                     thumbnailURL: album.thumbnailURL ?? song.thumbnailURL,
                     trackCount: album.trackCount,
-                    author: Artist(id: UUID().uuidString, name: album.artistsDisplay)
+                    author: Artist.inline(name: album.artistsDisplay, namespace: "album-artist")
                 )
                 NavigationLink(value: playlist) {
                     Label("Go to Album", systemImage: "square.stack")
