@@ -10,6 +10,8 @@ enum AppLocalization {
     // swiftformat:disable modifierOrder
     /// Override bundle for a specific language, set via `setLanguage(_:)`.
     nonisolated(unsafe) static var overrideBundle: Bundle?
+    /// The selected language code, including development-region overrides.
+    nonisolated(unsafe) static var overrideLanguageCode: String?
     // swiftformat:enable modifierOrder
 
     /// The active localization bundle.
@@ -25,17 +27,48 @@ enum AppLocalization {
     /// Sets the active language by loading the corresponding `.lproj` bundle.
     /// Pass `nil` to revert to the system default.
     static func setLanguage(_ languageCode: String?) {
+        self.overrideLanguageCode = languageCode
+
         guard let code = languageCode else {
             self.overrideBundle = nil
             return
         }
-        if let path = self.baseBundle.path(forResource: code, ofType: "lproj"),
-           let lprojBundle = Bundle(path: path)
+
+        self.overrideBundle = Self.bundle(forLocalization: code)
+    }
+
+    /// Finds a bundle for a specific localization, including development-region
+    /// localizations that may be emitted from `.xcstrings` resources.
+    static func bundle(forLocalization localization: String) -> Bundle? {
+        if let bundlePath = self.baseBundle.path(forResource: localization, ofType: "lproj"),
+           let bundle = Bundle(path: bundlePath)
         {
-            self.overrideBundle = lprojBundle
-        } else {
-            self.overrideBundle = nil
+            return bundle
         }
+
+        guard let stringsPath = self.baseBundle.path(
+            forResource: "Localizable",
+            ofType: "strings",
+            inDirectory: nil,
+            forLocalization: localization
+        ) else {
+            return nil
+        }
+
+        let localizationDirectory = URL(fileURLWithPath: stringsPath).deletingLastPathComponent()
+        return Bundle(url: localizationDirectory)
+    }
+
+    /// Resolves an app-localized string while honoring development-region
+    /// overrides that may not emit a physical `.lproj` bundle in SwiftPM builds.
+    static func localizedString(forKey key: String, value: String? = nil, table: String? = nil) -> String {
+        if self.overrideBundle == nil,
+           self.overrideLanguageCode == self.baseBundle.developmentLocalization
+        {
+            return value ?? key
+        }
+
+        return self.bundle.localizedString(forKey: key, value: value, table: table)
     }
 
     static func shouldOverrideLocalization(for bundle: Bundle) -> Bool {
@@ -71,7 +104,7 @@ private struct LocalizedNavigationTitleModifier: ViewModifier {
 
     func body(content: Content) -> some View {
         let _ = self.locale // swiftlint:disable:this redundant_discardable_let
-        content.navigationTitle(AppLocalization.bundle.localizedString(forKey: self.key, value: nil, table: nil))
+        content.navigationTitle(AppLocalization.localizedString(forKey: self.key, value: nil, table: nil))
     }
 }
 

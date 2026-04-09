@@ -86,6 +86,14 @@ struct MainWindow: View {
                     OnboardingView()
                 }
             }
+            .onAppear {
+                DiagnosticsLogger.app.info("MainWindow: UI appeared")
+            }
+            .task {
+                DiagnosticsLogger.app.info("MainWindow: Starting login check check...")
+                await self.authService.checkLoginStatus()
+                DiagnosticsLogger.app.info("MainWindow: Login check complete")
+            }
 
             // Persistent WebView - always present once a video has been requested
             // Uses a SINGLETON WebView instance that persists for the app lifetime
@@ -266,7 +274,7 @@ struct MainWindow: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .onReceive(NotificationCenter.default.publisher(for: NSWindow.didBecomeKeyNotification)) { _ in
-                // Ensure sidebar is visible when window becomes key (e.g., restored from dock)
+                // Ensure the sidebar returns when the app is re-activated from the Dock or app switcher.
                 if self.columnVisibility != .all {
                     self.columnVisibility = .all
                 }
