@@ -28,6 +28,7 @@ extension PlayerService {
         self.logger.debug("play() called with videoId: \(videoId)")
         self.logger.info("Playing video: \(videoId)")
         self.clearRestoredPlaybackSessionState()
+        self.currentEpisode = nil
         self.state = .loading
         self.songNearingEnd = false
         self.shouldSuppressAutoplayAfterQueueEnd = false
@@ -69,10 +70,16 @@ extension PlayerService {
     /// Plays a song.
     /// - Parameter webLoadStrategy: Controls duplicate-`videoId` behavior in ``SingletonPlayerWebView/loadVideo(videoId:strategy:)``
     ///   (repeat-one prefers in-place restart; queue drift correction may force a full page load).
-    func play(song: Song, webLoadStrategy: SingletonPlayerWebView.VideoLoadStrategy) async {
+    /// - Parameter episode: Artist episode metadata to preserve for standalone episode playback.
+    func play(
+        song: Song,
+        webLoadStrategy: SingletonPlayerWebView.VideoLoadStrategy,
+        episode: ArtistEpisode? = nil
+    ) async {
         self.logger.info("Playing song: \(song.title)")
         self.logger.debug("Web load strategy: \(String(describing: webLoadStrategy))")
         self.clearRestoredPlaybackSessionState()
+        self.currentEpisode = episode
         // Brief `.loading` until the observer reports playback; in-place restarts may flash loading briefly.
         self.state = .loading
         self.songNearingEnd = false
@@ -290,6 +297,13 @@ extension PlayerService {
             return
         }
 
+        // Standalone artist episodes are intentionally not in the local queue.
+        // Do not let them fall through to YouTube Music's ambient next button.
+        guard self.currentEpisode == nil else {
+            self.logger.debug("Ignoring next for standalone artist episode playback")
+            return
+        }
+
         if self.pendingPlayVideoId != nil {
             SingletonPlayerWebView.shared.next()
         }
@@ -324,6 +338,13 @@ extension PlayerService {
             } else {
                 await self.seek(to: 0)
             }
+            return
+        }
+
+        // Standalone artist episodes are intentionally not in the local queue.
+        // Do not restart them or fall through to YouTube Music's ambient previous button.
+        guard self.currentEpisode == nil else {
+            self.logger.debug("Ignoring previous for standalone artist episode playback")
             return
         }
 
@@ -421,6 +442,7 @@ extension PlayerService {
         self.songNearingEnd = false
         self.isKasetInitiatedPlayback = false
         self.shouldSuppressAutoplayAfterQueueEnd = false
+        self.currentEpisode = nil
         self.currentTrack = nil
         self.progress = 0
         self.duration = 0

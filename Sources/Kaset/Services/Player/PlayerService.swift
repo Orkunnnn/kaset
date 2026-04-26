@@ -48,6 +48,9 @@ final class PlayerService: NSObject, PlayerServiceProtocol {
     /// Currently playing track.
     var currentTrack: Song?
 
+    /// Artist-page episode backing the current playback, when applicable.
+    var currentEpisode: ArtistEpisode?
+
     /// Whether playback is active.
     var isPlaying: Bool {
         self.state.isPlaying
