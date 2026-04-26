@@ -69,7 +69,7 @@ final class PlayerService: NSObject, PlayerServiceProtocol {
     var volume: Double = 1.0
 
     /// Volume before muting, for unmute restoration.
-    var volumeBeforeMute: Double = 1.0
+    private(set) var volumeBeforeMute: Double = 1.0
 
     /// Whether audio is currently muted.
     var isMuted: Bool {
@@ -80,7 +80,7 @@ final class PlayerService: NSObject, PlayerServiceProtocol {
     var shuffleEnabled: Bool = false
 
     /// Current repeat mode.
-    var repeatMode: RepeatMode = .off
+    private(set) var repeatMode: RepeatMode = .off
 
     /// Playback queue.
     private var queueStorage: [QueueEntry] = []
@@ -113,7 +113,7 @@ final class PlayerService: NSObject, PlayerServiceProtocol {
 
     /// Whether the user has successfully interacted at least once this session.
     /// After first successful playback, we can auto-play without showing the popup.
-    var hasUserInteractedThisSession: Bool = false
+    private(set) var hasUserInteractedThisSession: Bool = false
 
     /// Saved seek position to apply once a restored session finishes loading.
     var pendingRestoredSeek: TimeInterval?
@@ -171,7 +171,7 @@ final class PlayerService: NSObject, PlayerServiceProtocol {
     var isAirPlayConnected: Bool = false
 
     /// Whether the user has requested AirPlay this session (for persistence across track changes).
-    var airPlayWasRequested: Bool = false
+    private(set) var airPlayWasRequested: Bool = false
 
     // MARK: - Internal Properties (for extensions)
 
@@ -193,7 +193,7 @@ final class PlayerService: NSObject, PlayerServiceProtocol {
     private static let queueUndoMaxCount = 10
 
     /// Queue index before each `next()`; `previous()` pops so Back returns to the track you skipped from (shuffle- and seek-safe).
-    var forwardSkipIndexStack: [Int] = []
+    private var forwardSkipIndexStack: [Int] = []
 
     /// UserDefaults key for persisting volume.
     static let volumeKey = "playerVolume"
@@ -262,6 +262,46 @@ final class PlayerService: NSObject, PlayerServiceProtocol {
 
         // Start queue metadata enrichment service
         self.startQueueEnrichmentService()
+    }
+
+    // MARK: - Controlled Mutators
+
+    /// Stores the pre-mute volume through a narrow API instead of exposing a writable property.
+    func rememberVolumeBeforeMute(_ value: Double) {
+        let normalizedValue = value > 0 ? value : 1.0
+        self.volumeBeforeMute = normalizedValue
+        UserDefaults.standard.set(normalizedValue, forKey: Self.volumeBeforeMuteKey)
+    }
+
+    /// Advances the repeat mode and persists it when playback settings are remembered.
+    func advanceRepeatMode() {
+        self.repeatMode = switch self.repeatMode {
+        case .off:
+            .all
+        case .all:
+            .one
+        case .one:
+            .off
+        }
+
+        guard SettingsManager.shared.rememberPlaybackSettings else { return }
+
+        let modeString = switch self.repeatMode {
+        case .off: "off"
+        case .all: "all"
+        case .one: "one"
+        }
+        UserDefaults.standard.set(modeString, forKey: Self.repeatModeKey)
+    }
+
+    /// Records that playback has succeeded after a user gesture in this app session.
+    func markUserInteractedThisSession() {
+        self.hasUserInteractedThisSession = true
+    }
+
+    /// Records that the user explicitly requested AirPlay in this app session.
+    func markAirPlayRequested() {
+        self.airPlayWasRequested = true
     }
 
     // MARK: - Queue Undo / Redo
@@ -333,6 +373,11 @@ final class PlayerService: NSObject, PlayerServiceProtocol {
         let from = self.currentIndex
         guard from != newIndex else { return }
         self.forwardSkipIndexStack.append(from)
+    }
+
+    /// Returns and removes the most recent index saved before a forward skip.
+    func popForwardSkipIndex() -> Int? {
+        self.forwardSkipIndexStack.popLast()
     }
 
     /// Loads mock player state from environment variables for UI testing.

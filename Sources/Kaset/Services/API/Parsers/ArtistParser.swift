@@ -7,10 +7,6 @@ import os
 enum ArtistParser { // swiftlint:disable:this type_body_length
     private static let logger = DiagnosticsLogger.api
 
-    private struct CarouselAccumulator {
-        var orderedSections: [ArtistDetailSection]
-    }
-
     private struct CarouselSectionItems {
         var albums: [Album] = []
         var singles: [Album] = []
@@ -776,75 +772,10 @@ enum ArtistParser { // swiftlint:disable:this type_body_length
         return tracks
     }
 
-    private static func parseCarouselSection(
-        _ renderer: [String: Any],
-        contents: [[String: Any]],
-        accumulator: inout CarouselAccumulator
-    ) {
-        let sectionTitle = self.carouselTitle(from: renderer)
-        var sectionItems = CarouselSectionItems()
-
-        for itemData in contents {
-            guard let twoRowRenderer = itemData["musicTwoRowItemRenderer"] as? [String: Any],
-                  let carouselItem = self.parseCarouselItemFromTwoRowRenderer(twoRowRenderer)
-            else {
-                continue
-            }
-
-            self.appendCarouselItem(carouselItem, sectionItems: &sectionItems)
-        }
-
-        if !sectionItems.albums.isEmpty {
-            accumulator.orderedSections.append(ArtistDetailSection(
-                title: sectionTitle ?? "Albums",
-                content: .albums(sectionItems.albums)
-            ))
-        }
-
-        if !sectionItems.playlists.isEmpty {
-            accumulator.orderedSections.append(ArtistDetailSection(
-                title: sectionTitle ?? "Playlists",
-                content: .playlists(sectionItems.playlists)
-            ))
-        }
-
-        guard !sectionItems.artists.isEmpty else { return }
-
-        accumulator.orderedSections.append(ArtistDetailSection(
-            title: sectionTitle ?? "Artists",
-            content: .artists(sectionItems.artists)
-        ))
-    }
-
-    private static func appendCarouselItem(
-        _ item: CarouselItem,
-        sectionItems: inout CarouselSectionItems
-    ) {
-        switch item {
-        case let .album(album):
-            sectionItems.albums.append(album)
-        case let .playlist(playlist):
-            sectionItems.playlists.append(playlist)
-        case let .artist(artist):
-            sectionItems.artists.append(artist)
-        }
-    }
-
     private enum CarouselItem {
         case album(Album)
         case playlist(Playlist)
         case artist(Artist)
-    }
-
-    private static func carouselTitle(from renderer: [String: Any]) -> String? {
-        guard let header = renderer["header"] as? [String: Any],
-              let basicHeader = header["musicCarouselShelfBasicHeaderRenderer"] as? [String: Any],
-              let title = ParsingHelpers.extractTitle(from: basicHeader)
-        else {
-            return nil
-        }
-
-        return title
     }
 
     private static func parseCarouselItemFromTwoRowRenderer(_ data: [String: Any]) -> CarouselItem? {

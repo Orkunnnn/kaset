@@ -128,7 +128,7 @@ extension PlayerService {
     func confirmPlaybackStarted() {
         self.showMiniPlayer = false
         self.state = .playing
-        self.hasUserInteractedThisSession = true
+        self.markUserInteractedThisSession()
         self.logger.info("Playback confirmed started, user interaction recorded")
     }
 
@@ -320,7 +320,7 @@ extension PlayerService {
                 return
             }
 
-            if let priorIndex = self.forwardSkipIndexStack.popLast(), self.queue.indices.contains(priorIndex) {
+            if let priorIndex = self.popForwardSkipIndex(), self.queue.indices.contains(priorIndex) {
                 self.currentIndex = priorIndex
                 if let prevSong = self.queue[safe: priorIndex] {
                     await self.play(song: prevSong)
@@ -395,8 +395,7 @@ extension PlayerService {
             await self.setVolume(restoredVolume)
             self.logger.info("Unmuted, volume restored to \(restoredVolume)")
         } else {
-            self.volumeBeforeMute = self.volume
-            UserDefaults.standard.set(self.volumeBeforeMute, forKey: Self.volumeBeforeMuteKey)
+            self.rememberVolumeBeforeMute(self.volume)
             await self.setVolume(0)
             self.logger.info("Muted")
         }
@@ -414,22 +413,7 @@ extension PlayerService {
 
     /// Cycles through repeat modes: off -> all -> one -> off.
     func cycleRepeatMode() {
-        switch self.repeatMode {
-        case .off:
-            self.repeatMode = .all
-        case .all:
-            self.repeatMode = .one
-        case .one:
-            self.repeatMode = .off
-        }
-        if SettingsManager.shared.rememberPlaybackSettings {
-            let modeString = switch self.repeatMode {
-            case .off: "off"
-            case .all: "all"
-            case .one: "one"
-            }
-            UserDefaults.standard.set(modeString, forKey: Self.repeatModeKey)
-        }
+        self.advanceRepeatMode()
         self.logger.info("Repeat mode: \(String(describing: self.repeatMode))")
     }
 
@@ -450,7 +434,7 @@ extension PlayerService {
 
     /// Show the AirPlay picker for selecting audio output devices.
     func showAirPlayPicker() {
-        self.airPlayWasRequested = true
+        self.markAirPlayRequested()
         SingletonPlayerWebView.shared.showAirPlayPicker()
     }
 
@@ -458,7 +442,7 @@ extension PlayerService {
     func updateAirPlayStatus(isConnected: Bool, wasRequested: Bool = false) {
         self.isAirPlayConnected = isConnected
         if wasRequested {
-            self.airPlayWasRequested = true
+            self.markAirPlayRequested()
         }
     }
 
